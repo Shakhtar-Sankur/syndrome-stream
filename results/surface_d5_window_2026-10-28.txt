@@ -1,0 +1,7 @@
+# Rotated surface code memory-Z, d = 5, 25 rounds, uniform circuit noise p = 0.4%, 20,000 shots (stim seed 1)
+# Inner decoder: PyMatching 2.4.0; stim 1.16.0; x86-64 CPU, 28 October 2026
+pymatching on the full DEM (reference): 0.03885
+our pipeline, one window:               0.03970 (53.1s)
+window w=10 c=5:                       0.03985  (5 windows, 12.0s)
+window w= 5 c=3:                       0.04655  (8 windows, 10.9s)
+window w= 3 c=1:                       0.05725  (24 windows, 20.5s)
