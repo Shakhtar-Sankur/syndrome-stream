@@ -38,3 +38,16 @@ def test_window_of_2d_rounds_matches_whole_history():
     whole = np.mean(decode(prob, syn, plan(prob, 10**6, 10**6), pymatching_decoder) != obs)
     streamed = np.mean(decode(prob, syn, plan(prob, 2 * D, D), pymatching_decoder) != obs)
     assert streamed <= whole * 1.3 + 0.005
+
+
+def test_detector_rounds_from_the_circuit_match_stim_time():
+    from syndrome_stream.window import detector_rounds
+
+    for rounds in (3, 6):
+        circ = stim.Circuit.generated("surface_code:rotated_memory_z", distance=3, rounds=rounds,
+                                      after_clifford_depolarization=P)
+        inferred = detector_rounds(circ)
+        coords = circ.detector_error_model().get_detector_coordinates()
+        t = np.array([int(coords[i][-1]) for i in range(len(inferred))])
+        # the final data-qubit layer joins the last round of checks
+        assert np.array_equal(inferred, np.minimum(t, rounds - 1))

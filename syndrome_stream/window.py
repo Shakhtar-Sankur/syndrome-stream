@@ -31,16 +31,45 @@ class Problem:
     det_round: np.ndarray  # round index of each detector
 
 
-def from_dem(dem, round_coord=-1, split_components=False):
+def detector_rounds(circuit):
+    """Round of every detector, read from the circuit, for detectors with no time coordinate.
+
+    A new round starts when a qubit is measured that was already measured in the current round,
+    so X- and Z-check layers measured one after the other share a round. A detector belongs to the
+    round of the latest measurement it compares; the final data-qubit measurements join the last
+    round of checks."""
+    import stim
+
+    round_of_meas, rounds = [], []
+    current, seen = 0, set()
+    for inst in circuit.flattened():
+        if stim.gate_data(inst.name).produces_measurements:
+            for t in inst.targets_copy():
+                if t.is_combiner:
+                    continue
+                q = t.qubit_value
+                if q in seen:
+                    current += 1
+                    seen = set()
+                seen.add(q)
+                round_of_meas.append(current)
+        elif inst.name == "DETECTOR":
+            recs = [t.value for t in inst.targets_copy()]  # negative offsets into the record
+            rounds.append(max(round_of_meas[len(round_of_meas) + r] for r in recs))
+    return np.asarray(rounds, dtype=np.int64)
+
+
+def from_dem(dem, round_coord=-1, split_components=False, det_round=None):
     """Check matrix, observable matrix, priors and detector rounds from a stim DetectorErrorModel.
 
     The round of a detector is its coordinate at `round_coord` (stim's convention: the last one).
     With split_components, each `^`-separated piece of a decomposed error becomes its own column
     with the error's probability, as PyMatching does for graph-like decoding; otherwise every error
     instruction is one column (for BP-type decoders such as Relay-BP)."""
-    coords = dem.get_detector_coordinates()
     n_det, n_obs = dem.num_detectors, dem.num_observables
-    det_round = np.array([int(round(coords[i][round_coord])) for i in range(n_det)], dtype=np.int64)
+    if det_round is None:
+        coords = dem.get_detector_coordinates()
+        det_round = np.array([int(round(coords[i][round_coord])) for i in range(n_det)], dtype=np.int64)
     rows, cols, orows, ocols, probs = [], [], [], [], []
     j = 0
     for inst in dem.flattened():
