@@ -26,8 +26,10 @@ cc = subprocess.run("nvidia-smi --query-gpu=compute_cap --format=csv,noheader", 
 # syndrome's Relay-BP kernel: same decodings as IBM's reference (-fmad=false keeps IBM's rounding)
 sh(f"cd syndrome/csrc && nvcc -O3 -fmad=false -std=c++17 -arch=sm_{cc} -Xcompiler -fPIC -shared "
    "-o libsyndrome_cuda.so relay_bp_cuda.cu")
-for p in ("0.006",):
+# Relay-BP converges quickly at p = 0.003 and often runs to its iteration limit at 0.006, so the shot counts
+# differ; each window size is saved as soon as it finishes, so a run cut short still keeps its results.
+for p, shots in (("0.003", 1000), ("0.006", 200)):
     sh(f"set -o pipefail; {sys.executable} syndrome-stream/bench/s1b_gross_windows.py --syndrome syndrome "
-       f"--relay relay --p {p} --shots 2000 --windows whole,6:3,4:2,3:1 --backend cuda "
+       f"--relay relay --p {p} --shots {shots} --windows whole,6:3,4:2,3:1 --backend cuda "
        f"--out {W}/s1b_gross_p{p}.json 2>&1 | tee {W}/s1b_gross_p{p}.log")
 sh(f"cat {W}/s1b_gross_p*.json")
