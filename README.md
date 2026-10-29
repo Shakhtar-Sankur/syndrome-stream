@@ -26,7 +26,7 @@ thread. That is still far from a microsecond per round. syndrome-stream takes th
 | Stage | Scope | Status |
 |---|---|---|
 | S1 | Sliding-window decoding around any inner decoder, checked against whole-history decoding | done for the surface code with PyMatching (below) |
-| S1b | The same windows around Relay-BP (IBM's reference, then the syndrome GPU kernel) on the gross code | next |
+| S1b | The same windows around Relay-BP (IBM's reference, then the syndrome GPU kernel) on the gross code | first measurement done (below) |
 | S2 | Decoding service on GPU nodes; throughput and latency per round | planned |
 | S3 | Benchmarks against whole-history Relay-BP, IBM's FPGA figure and CUDA-Q | planned |
 | S4 | Experiments on IBM quantum hardware, decoded through the service | planned |
@@ -54,6 +54,35 @@ inner decoder ([raw output](results/surface_d5_window_2026-10-28.txt)):
 A window of about 2d rounds matches whole-history decoding; shorter windows trade accuracy for smaller
 problems. The same trade-off for Relay-BP on the gross code is S1b's measurement. The small gap between
 the reference and "one window" comes from how parallel graph edges are merged, not from windowing.
+
+## S1b: sliding windows around GPU Relay-BP on the gross code
+
+The same windows around the [syndrome](https://github.com/Shakhtar-Sankur/syndrome) CUDA Relay-BP, on
+IBM's [[144,12,12]] gross-code memory circuit: 12 rounds, 1728 detectors and 67,752 error mechanisms,
+uniform circuit noise. Every decoding sees the same shots. One Kaggle Tesla T4
+([public run](https://www.kaggle.com/code/sankurkundu/notebook6fe8dc7118);
+[raw output](results/gross_s1b_kaggle_2026-10-29.txt), [JSON](results/gross_s1b_kaggle_2026-10-29.json)).
+The brackets are 95% Wilson intervals.
+
+| Decoding (window : commit, rounds) | Largest problem | p = 0.3%, 1000 shots | p = 0.6%, 200 shots |
+|---|---|---|---|
+| Whole history | 67,752 | **0 errors** (< 0.38%) | 38.5% [32.0, 45.4] |
+| 6 : 3 | 35,424 | 0.1% [0.02, 0.56] | **30.5%** [24.5, 37.2] |
+| 4 : 2 | 23,616 | 0.6% [0.28, 1.30] | 35.0% [28.7, 41.8] |
+| 3 : 1 | 18,720 | 0.4% [0.16, 1.02] | 31.5% [25.5, 38.2] |
+
+- **At p = 0.3%, windows cost accuracy.** The whole-history decoder made no error in 1000 shots. A 6-round
+  window made one, and shorter windows four to six. This is the same trade-off as on the surface code, and
+  the gross code needs a window of at least half its 12 rounds.
+- **At p = 0.6%, the code is past its useful range.** Every decoder fails on about a third of shots. The
+  windows come out no worse than whole-history decoding, and possibly better. On the largest problem,
+  Relay-BP more often stops at its iteration limit. 200 shots cannot separate them.
+- **Size and time.** A 6 : 3 window halves the largest decoding problem, and 3 : 1 cuts it to 28%. The
+  slowest single window takes 64 ms per shot on average at p = 0.3%, against 194 ms for the whole history
+  (batch time divided by shots). Summed over all windows, the work is not yet smaller. Overlapping windows
+  re-decode rounds, so S2 has to pipeline them.
+
+Next: more shots at p = 0.1–0.3%, where IBM reports its operating point, and window 8 : 4.
 
 ```bash
 pip install -r requirements.txt
