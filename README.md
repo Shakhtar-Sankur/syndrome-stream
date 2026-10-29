@@ -75,8 +75,8 @@ The brackets are 95% Wilson intervals.
   window made one, and shorter windows four to six. This is the same trade-off as on the surface code, and
   the gross code needs a window of at least half its 12 rounds.
 - **At p = 0.6%, the code is past its useful range.** Every decoder fails on about a third of shots. The
-  windows come out no worse than whole-history decoding, and possibly better. On the largest problem,
-  Relay-BP more often stops at its iteration limit. 200 shots cannot separate them.
+  windows come out no worse than whole-history decoding, and possibly better, likely because on the largest
+  problem Relay-BP more often stops at its iteration limit. 200 shots cannot separate them.
 - **Size and time.** A 6 : 3 window halves the largest decoding problem, and 3 : 1 cuts it to 28%. The
   slowest single window takes 64 ms per shot on average at p = 0.3%, against 194 ms for the whole history
   (batch time divided by shots). Summed over all windows, the work is not yet smaller. Overlapping windows
