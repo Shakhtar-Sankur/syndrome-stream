@@ -1,0 +1,14 @@
+Kaggle notebook https://www.kaggle.com/code/sankurkundu/notebook6fe8dc7118 (Tesla T4), notebooks/s1b_kaggle.py at d704c3b
+$ cd syndrome/csrc && nvcc -O3 -fmad=false -std=c++17 -arch=sm_75 -Xcompiler -fPIC -shared -o libsyndrome_cuda.so relay_bp_cuda.cu
+$ set -o pipefail; /usr/bin/python3 syndrome-stream/bench/s1b_gross_windows.py --syndrome syndrome --relay relay --p 0.003 --shots 1000 --windows whole,6:3,4:2,3:1 --backend cuda --out /kaggle/working/s1b_gross_p0.003.json 2>&1 | tee /kaggle/working/s1b_gross_p0.003.log
+gross code p=0.003: 1728 detectors, 67752 error mechanisms, rounds 0..11, 1000 shots
+ whole:    0 / 1000 logical errors (0.0000), 1 windows, largest 67752 error mechanisms, 195 s
+   6:3:    1 / 1000 logical errors (0.0010), 3 windows, largest 35424 error mechanisms, 178 s
+   4:2:    6 / 1000 logical errors (0.0060), 5 windows, largest 23616 error mechanisms, 293 s
+   3:1:    4 / 1000 logical errors (0.0040), 10 windows, largest 18720 error mechanisms, 304 s
+$ set -o pipefail; /usr/bin/python3 syndrome-stream/bench/s1b_gross_windows.py --syndrome syndrome --relay relay --p 0.006 --shots 200 --windows whole,6:3,4:2,3:1 --backend cuda --out /kaggle/working/s1b_gross_p0.006.json 2>&1 | tee /kaggle/working/s1b_gross_p0.006.log
+gross code p=0.006: 1728 detectors, 67752 error mechanisms, rounds 0..11, 200 shots
+ whole:   77 / 200 logical errors (0.3850), 1 windows, largest 67752 error mechanisms, 713 s
+   6:3:   61 / 200 logical errors (0.3050), 3 windows, largest 35424 error mechanisms, 542 s
+   4:2:   70 / 200 logical errors (0.3500), 5 windows, largest 23616 error mechanisms, 538 s
+   3:1:   63 / 200 logical errors (0.3150), 10 windows, largest 18720 error mechanisms, 576 s
